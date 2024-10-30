@@ -23,19 +23,19 @@ Submitted on:
 int main( int argc , char *argv[] )
 {
     pid_t  amalPID , basimPID , kdcPID ; 
-    int    AtoB_ctrl[2] , AtoB_data[2] , KDCtoA_ctrl[2] , KDCtoA_data[2] ;  // Amal to Basim control and data pipes
-    char   arg1[20] , arg2[20] ;
+    int    AtoB[2] , BtoA[2] , KDCtoA[2] , AtoKDC[2] ;  // Amal, Basim, KDC pipes
+    char   arg1[20] , arg2[20] , arg3[20], arg4[20] ;
     
-    Pipe( AtoB_ctrl ) ;  // create pipe for Amal-to-Basim control
-    Pipe( AtoB_data ) ;  // create pipe for Amal-to-Basim data
-    Pipe( KDCtoA_ctrl);  // create pipe for Amal-to-KDC data
-    Pipe( KDCtoA_data);  // create pipe for KDC-to-Amal data
+    Pipe( KDCtoA);  // create pipe for KDC-to-Amal
+    Pipe( AtoKDC);  // create pipe for Amal-to-KDC
+    Pipe( AtoB ) ;  // create pipe for Amal-to-Basim
+    Pipe( BtoA ) ;  // create pipe for Basim-to-Aaml
 
     printf("\tDispatcher started and created these pipes\n") ;
-    printf("\tAmal-to-Basim control pipe: read=%d  write=%d\n", AtoB_ctrl[ READ_END ] , AtoB_ctrl[ WRITE_END ] ) ;
-    printf("\tAmal-to-Basim data    pipe: read=%d  write=%d\n", AtoB_data[ READ_END ] , AtoB_data[ WRITE_END ] ) ;
-    printf("\tKDC-to-Amal control   pipe: read=%d  write=%d\n", KDCtoA_ctrl[ READ_END ] , KDCtoA_ctrl[ WRITE_END ] ) ;
-    printf("\tKDC-to-Amal data      pipe: read=%d  write=%d\n", KDCtoA_data[ READ_END ] , KDCtoA_data[ WRITE_END ] ) ;
+    printf("\tAmal-to-KDC   protocol pipe: read=%d  write=%d\n", AtoKDC[ READ_END ] , AtoKDC[ WRITE_END ] ) ;
+    printf("\tKDC-to-Amal   protocol pipe: read=%d  write=%d\n", KDCtoA[ READ_END ] , KDCtoA[ WRITE_END ] ) ;
+    printf("\tAmal-to-Basim protocol pipe: read=%d  write=%d\n", AtoB[ READ_END ] , AtoB[ WRITE_END ] ) ;
+    printf("\tBasim-to-Amal protocol pipe: read=%d  write=%d\n", BtoA[ READ_END ] , BtoA[ WRITE_END ] ) ;
 
 
     // Create both child processes:
@@ -46,12 +46,16 @@ int main( int argc , char *argv[] )
     {    
         // This is the Amal process.
         // Amal will not use these ends of the pipes, decrement their 'Ref Count'
-        close( AtoB_ctrl[ READ_END ] ) ;
-        close( AtoB_data[ READ_END ] ) ;
+        close( AtoKDC[ READ_END ]) ;
+        close( KDCtoA[ WRITE_END ] ) ;
+        close( AtoB[ READ_END ] ) ;
+        close( BtoA[ WRITE_END ]) ;
         
         // Prepare the file descriptors as args to Amal
-        snprintf( arg1 , 20 , "%d" , AtoB_ctrl[ WRITE_END ] ) ;
-        snprintf( arg2 , 20 , "%d" , AtoB_data[ WRITE_END ] ) ;
+        snprintf( arg1 , 20 , "%d" , AtoKDC[ WRITE_END ] ) ;
+        snprintf( arg2 , 20 , "%d" , KDCtoA[ READ_END ] ) ;
+        snprintf( arg3 , 20 , "%d" , BtoA[ READ_END ] ) ;
+        snprintf( arg4 , 20 , "%d" , AtoB[ WRITE_END ] ) ;
         
         // Now, Start Amal
         char * cmnd = "./amal/amal" ;
@@ -65,12 +69,16 @@ int main( int argc , char *argv[] )
     {   // This is still the Dispatcher process  
         // This is the Basim process
         // Basim will not use these ends of the pipes, decrement their 'count'
-        close( AtoB_ctrl[ WRITE_END ] ) ;
-        close( AtoB_data[ WRITE_END ] ) ;
+        close( AtoKDC[ WRITE_END ] ) ;
+        close( KDCtoA[ WRITE_END ] ) ;
+        close( AtoKDC[ READ_END ]) ;
+        close( KDCtoA[ READ_END ] ) ;
+        close( AtoB[ WRITE_END ]) ;
+        close( BtoA[ READ_END ]) ;
         
         // Prepare the file descriptors as args to Basim
-        snprintf( arg1 , 20 , "%d" , AtoB_ctrl[ READ_END ] ) ;
-        snprintf( arg2 , 20 , "%d" , AtoB_data[ READ_END ] ) ;
+        snprintf( arg1 , 20 , "%d" , AtoB[ READ_END ] ) ;
+        snprintf( arg2 , 20 , "%d" , BtoA[ WRITE_END ] ) ;
 
         char * cmnd = "./basim/basim" ;
         execlp( cmnd , "Basim" , arg1 , arg2 , NULL );
@@ -83,12 +91,16 @@ int main( int argc , char *argv[] )
     {
         // This is the Amal process.
         // Amal will not use these ends of the pipes, decrement their 'Ref Count'
-        close( KDCtoA_ctrl[ READ_END ] ) ;
-        close( KDCtoA_data[ READ_END ] ) ;
+        close( AtoKDC[ WRITE_END ]) ;
+        close( KDCtoA[ READ_END ] ) ;
+        close( AtoB[ WRITE_END ] ) ;
+        close( AtoB[ READ_END ] ) ;
+        close( BtoA[ WRITE_END ] ) ;
+        close( BtoA[ READ_END ] ) ;
         
         // Prepare the file descriptors as args to Amal
-        snprintf( arg1 , 20 , "%d" , KDCtoA_ctrl[ WRITE_END ] ) ;
-        snprintf( arg2 , 20 , "%d" , KDCtoA_data[ WRITE_END ] ) ;
+        snprintf( arg1 , 20 , "%d" , AtoKDC[ READ_END ] ) ;
+        snprintf( arg2 , 20 , "%d" , KDCtoA[ WRITE_END ] ) ;
         
         // Now, Start Amal
         char * cmnd = "./kdc/kdc" ;
@@ -101,14 +113,15 @@ int main( int argc , char *argv[] )
     else
     {   // This is still the parent Dispatcher  process
         // close all ends of the pipes so that their 'count' is decremented
-        close( AtoB_ctrl[ WRITE_END ] ); 
-        close( AtoB_ctrl[ READ_END  ]  );   
-        close( AtoB_data[ WRITE_END ] ); 
-        close( AtoB_data[ READ_END  ]  ); 
-        close( KDCtoA_ctrl[ WRITE_END ] ) ;
-        close( KDCtoA_ctrl[ READ_END ] ) ;
-        close( KDCtoA_data[ WRITE_END ] ) ;
-        close( KDCtoA_data[ READ_END ] ) ;  
+        
+        close( AtoKDC[ WRITE_END ] ) ;
+        close( AtoKDC[ READ_END ] ) ;
+        close( KDCtoA[ WRITE_END ] ) ;
+        close( KDCtoA[ READ_END ] ) ; 
+        close( AtoB[ WRITE_END ] ); 
+        close( AtoB[ READ_END  ]  );   
+        close( BtoA[ WRITE_END ] ); 
+        close( BtoA[ READ_END  ]  );  
 
         printf("\n\tDispatcher is now waiting for Amal to terminate\n") ;
         int  exitStatus ;
