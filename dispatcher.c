@@ -23,7 +23,7 @@ int main( int argc , char *argv[] )
 {
     pid_t  amalPID , basimPID , kdcPID ; 
     int    AtoB_ctrl[2] , AtoB_data[2] , KDCtoA_ctrl[2] , KDCtoA_data[2] ;  // Amal to Basim control and data pipes
-    char   arg1[20] , arg2[20] , arg3[20] , arg4[20];
+    char   arg1[20] , arg2[20] ;
     
     Pipe( AtoB_ctrl ) ;  // create pipe for Amal-to-Basim control
     Pipe( AtoB_data ) ;  // create pipe for Amal-to-Basim data
@@ -78,14 +78,36 @@ int main( int argc , char *argv[] )
         perror("ERROR starting Basim" ) ;
         exit(-1) ;
     }
-    // make kdc here!!!!!!!!
+    else if (kdcPID == 0)
+    {
+        // This is the Amal process.
+        // Amal will not use these ends of the pipes, decrement their 'Ref Count'
+        close( KDCtoA_ctrl[ READ_END ] ) ;
+        close( KDCtoA_data[ READ_END ] ) ;
+        
+        // Prepare the file descriptors as args to Amal
+        snprintf( arg1 , 20 , "%d" , KDCtoA_ctrl[ WRITE_END ] ) ;
+        snprintf( arg2 , 20 , "%d" , KDCtoA_data[ WRITE_END ] ) ;
+        
+        // Now, Start Amal
+        char * cmnd = "./kdc/kdc" ;
+        execlp( cmnd , "KDC" , arg1 , arg2 , NULL );
+
+        // the above execlp() only returns if an error occurs
+        perror("ERROR starting Amal" );
+        exit(-1) ;      
+    }
     else
     {   // This is still the parent Dispatcher  process
         // close all ends of the pipes so that their 'count' is decremented
         close( AtoB_ctrl[ WRITE_END ] ); 
         close( AtoB_ctrl[ READ_END  ]  );   
         close( AtoB_data[ WRITE_END ] ); 
-        close( AtoB_data[ READ_END  ]  );   
+        close( AtoB_data[ READ_END  ]  ); 
+        close( KDCtoA_ctrl[ WRITE_END ] ) ;
+        close( KDCtoA_ctrl[ READ_END ] ) ;
+        close( KDCtoA_data[ WRITE_END ] ) ;
+        close( KDCtoA_data[ READ_END ] ) ;  
 
         printf("\n\tDispatcher is now waiting for Amal to terminate\n") ;
         int  exitStatus ;
