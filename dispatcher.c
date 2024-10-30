@@ -22,16 +22,19 @@ Submitted on:
 int main( int argc , char *argv[] )
 {
     pid_t  amalPID , basimPID ; 
-    int    AtoB_ctrl[2] , AtoB_data[2], AtoKDC_data[2] ;  // Amal to Basim control and data pipes
-    char   arg1[20] , arg2[20] ;
+    int    AtoB_ctrl[2] , AtoB_data[2] , AtoKDC_data[2] , KDCtoA_ctrl[2] ;  // Amal to Basim control and data pipes
+    char   arg1[20] , arg2[20] , arg3[20] , arg4[20];
     
     Pipe( AtoB_ctrl ) ;  // create pipe for Amal-to-Basim control
     Pipe( AtoB_data ) ;  // create pipe for Amal-to-Basim data
     Pipe( AtoKDC_data);  // create pipe for Amal-to-KDC data
+    Pipe( KDCtoA_ctrl);  // create pipe for KDC-to-Amal data
 
     printf("\tDispatcher started and created these pipes\n") ;
     printf("\tAmal-to-Basim control pipe: read=%d  write=%d\n", AtoB_ctrl[ READ_END ] , AtoB_ctrl[ WRITE_END ] ) ;
     printf("\tAmal-to-Basim data    pipe: read=%d  write=%d\n", AtoB_data[ READ_END ] , AtoB_data[ WRITE_END ] ) ;
+    printf("\tAmal-to-KDC data    pipe: read=%d  write=%d\n", AtoKDC_data[ READ_END ] , AtoKDC_data[ WRITE_END ] ) ;
+    printf("\tKDC-to-Amal data    pipe: read=%d  write=%d\n", KDCtoA_ctrl[ READ_END ] , KDCtoA_ctrl[ WRITE_END ] ) ;
 
 
     // Create both child processes:
@@ -98,6 +101,6 @@ int main( int argc , char *argv[] )
                     printf(" with status =%d\n" , WEXITSTATUS(exitStatus ) ) ;
      
         }
-    }  
+    }
 }
 
