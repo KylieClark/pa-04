@@ -50,8 +50,8 @@ int main( int argc , char *argv[] )
         close( BtoA[ WRITE_END ]) ;
         
         // Prepare the file descriptors as args to Amal
-        snprintf( arg2 , 20 , "%d" , KDCtoA[ READ_END ] ) ;
-        snprintf( arg1 , 20 , "%d" , AtoKDC[ WRITE_END ] ) ;
+        snprintf( arg1 , 20 , "%d" , KDCtoA[ READ_END ] ) ;
+        snprintf( arg2 , 20 , "%d" , AtoKDC[ WRITE_END ] ) ;
         snprintf( arg3 , 20 , "%d" , BtoA[ READ_END ] ) ;
         snprintf( arg4 , 20 , "%d" , AtoB[ WRITE_END ] ) ;
         
@@ -71,10 +71,10 @@ int main( int argc , char *argv[] )
             // This is the Basim process
             // Basim will not use these ends of the pipes, decrement their 'count'
             
-            // close( AtoKDC[ WRITE_END ] ) ;
-            // close( KDCtoA[ WRITE_END ] ) ;
-            // close( AtoKDC[ READ_END ]) ;
-            // close( KDCtoA[ READ_END ] ) ;
+            close( AtoKDC[ WRITE_END ] ) ;
+            close( KDCtoA[ WRITE_END ] ) ;
+            close( AtoKDC[ READ_END ]) ;
+            close( KDCtoA[ READ_END ] ) ;
             close( AtoB[ WRITE_END ]) ;
             close( BtoA[ READ_END ]) ;
             
@@ -98,10 +98,10 @@ int main( int argc , char *argv[] )
                 
                 close( AtoKDC[ WRITE_END ]) ;
                 close( KDCtoA[ READ_END ] ) ;
-                // close( AtoB[ WRITE_END ] ) ;
-                // close( AtoB[ READ_END ] ) ;
-                // close( BtoA[ WRITE_END ] ) ;
-                // close( BtoA[ READ_END ] ) ;
+                close( AtoB[ WRITE_END ] ) ;
+                close( AtoB[ READ_END ] ) ;
+                close( BtoA[ WRITE_END ] ) ;
+                close( BtoA[ READ_END ] ) ;
                 
                 // Prepare the file descriptors as args to Amal
                 snprintf( arg1 , 20 , "%d" , AtoKDC[ READ_END ] ) ;

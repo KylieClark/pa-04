@@ -1,10 +1,13 @@
 
 Starting Amal's  REFERENCE Code by ABOUTABL.
 
-Logged in as user 'clar24ka' on Wed Oct 30 21:03:56 2024
+Logged in as user 'clar24ka' on Wed Oct 30 21:13:45 2024
 
-<readFr. KDC> FD=4 , <sendTo KDC> FD=5 , <readFr. Basim> FD=9 , <sendTo Basim> FD=8
+<readFr. KDC> FD=5 , <sendTo KDC> FD=4 , <readFr. Basim> FD=9 , <sendTo Basim> FD=8
 
 Amal is sending the following to the KDC 'Amal   sends greetings to KDC           '
+Amal received the following from the KDC 'KDC    sends greetings to Amal          ' .... VALID
+Amal is sending the following to Basim   'Amal   sends greetings to Basim         '
+Amal received the following from Basim   'Basim  sends greetings to Amal          ' .... VALID
 
-This is Amal's REFERENCE Code by ABOUTABL. Could not send MSG #1
+Amal has terminated normally. Goodbye
