@@ -1,0 +1,31 @@
+***************************************************
+Starting the KDC
+***************************************************
+
+<readFrom Amal> FD=3 , <sendTo Amal> FD=6
+
+Amal has this Master Ka { key , IV }
+    0000 - 5f 8b d6 a2 ea 9b ec e9-a8 de a6 b4 50 22 31 75   _...........P"1u
+    0010 - 4d 28 89 5d d0 c8 37 c5-01 5b 79 e3 0d f0 81 fe   M(.]..7..[y.....
+
+    0000 - bf 54 5a 8f 76 06 6a 54-a7 dd e6 33 b7 cb 74 f6   .TZ.v.jT...3..t.
+
+Basim has this Master Kb { key , IV }
+    0000 - 25 00 a1 d2 a1 10 7c b7-bf c5 61 2a 60 32 45 35   %.....|...a*`2E5
+    0010 - 70 47 4a ed 2a 81 8e ae-1e a5 c2 57 5e 70 a3 bf   pGJ.*......W^p..
+
+    0000 - ab 2b 86 ef c0 92 e9 12-2a f9 69 ac bc 75 4f 8a   .+......*.i..uO.
+
+***************************************************
+         MSG1 Receive
+***************************************************
+MSG1 ( 49 bytes ) has been received on FD 3 by MSG1_receive():
+
+KDC received message 1 from Amal with:
+    IDa = 'Amal is Hope'
+    IDb = 'Basim is Smiley'
+    Na ( 4 Bytes ) is:
+    0000 - 44 33 22 11                                       D3".
+
+
+The KDC has terminated normally. Goodbye

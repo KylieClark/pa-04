@@ -1,0 +1,17 @@
+***************************************************
+Starting Basim
+***************************************************
+
+<readFrom Amal> FD=7 , <sendTo Amal> FD=10
+
+Basim has this Master Kb { key , IV }
+    0000 - 25 00 a1 d2 a1 10 7c b7-bf c5 61 2a 60 32 45 35   %.....|...a*`2E5
+    0010 - 70 47 4a ed 2a 81 8e ae-1e a5 c2 57 5e 70 a3 bf   pGJ.*......W^p..
+
+    0000 - ab 2b 86 ef c0 92 e9 12-2a f9 69 ac bc 75 4f 8a   .+......*.i..uO.
+
+Basim will use this Nonce:  Nb
+    0000 - 99 88 77 66                                       ..wf
+
+
+Basim has terminated normally. Goodbye
