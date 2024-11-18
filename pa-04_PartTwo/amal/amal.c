@@ -4,8 +4,8 @@ pa-04_PartTwo:  Intro to Enhanced Needham-Schroeder Key-Exchange with TWO-way Au
 FILE:   amal.c     SKELETON
 
 Written By: 
-     1- YOU  MUST   WRITE 
-	 2- FULL NAMES  HERE   (or risk losing points )
+     1- Kylie Clark 
+	 2- Cole Strubhar   (or risk losing points )
 Submitted on: 
      Insert the date of Submission here
 ----------------------------------------------------------------------------*/
@@ -44,10 +44,107 @@ void  getNonce4Amal( int which , Nonce_t  value )
 //*************************************
 int main ( int argc , char * argv[] )
 {
-
-    
-    
     // Your code from pa-04_PartOne
+
+    int      fd_A2K , fd_K2A , fd_A2B , fd_B2A  ;
+    FILE    *log ;
+
+    char *developerName = "Code by Kylie Clark and Cole Strubhar" ;
+
+    fprintf( stdout , "Starting Amal's      %s.\n" , developerName  ) ;
+    
+    if( argc < 5 )
+    {
+        printf("\nMissing command-line file descriptors: %s <getFr. KDC> <sendTo KDC> "
+               "<getFr. Basim> <sendTo Basim>\n\n" , argv[0]) ;
+        exit(-1) ;
+    }
+    fd_K2A    = atoi(argv[1]) ;  // Read from KDC    File Descriptor
+    fd_A2K    = atoi(argv[2]) ;  // Send to   KDC    File Descriptor
+    fd_B2A    = atoi(argv[3]) ;  // Read from Basim  File Descriptor
+    fd_A2B    = atoi(argv[4]) ;  // Send to   Basim  File Descriptor
+
+    log = fopen("amal/logAmal.txt" , "w" );
+    if( ! log )
+    {
+        fprintf( stderr , "\nAmal's  %s. Could not create my log file\n" , developerName  ) ;
+        exit(-1) ;
+    }
+
+    BANNER( log ) ;
+    fprintf( log , "Starting Amal\n" ) ;
+    BANNER( log ) ;
+
+    fprintf( log , "\n<readFrom KDC> FD=%d , <sendTo KDC> FD=%d , "
+                   "<readFrom Basim> FD=%d , <sendTo Basim> FD=%d\n\n" , 
+                   fd_K2A , fd_A2K , fd_B2A , fd_A2B );
+
+    // Get Amal's master key with the KDC
+    myKey_t  Ka ;  // Amal's master key with the KDC
+
+
+    // Use  getKeyFromFile( "amal/amalKey.bin" , .... ) )
+	// On failure, print "\nCould not get Amal's Masker key & IV.\n" to both  stderr and the Log file
+	// and exit(-1)
+	// On success, print "Amal has this Master Ka { key , IV }\n" to the Log file
+	// BIO_dump the Key IV indented 4 spaces to the righ
+
+    int success = getKeyFromFile("amal/amalKey.bin", &Ka);
+    
+    if (success < 0) {
+        fprintf(stderr, "\nCould not get Amal's Master key & IV.\n");
+        fprintf(log, "\nCould not get Amal's Master key & IV.\n");
+        exit(-1);
+    }
+
+    fprintf(log, "Amal has this Master Ka { key , IV }");
+    fprintf( log , "\n" );
+	// BIO_dump the IV indented 4 spaces to the righ
+    BIO_dump_indent_fp(log, Ka.key, sizeof(Ka.key), 4);
+    fprintf(log, "\n");
+    BIO_dump_indent_fp(log, Ka.iv, sizeof(Ka.iv), 4);
+
+    // Get Amal's pre-created Nonces: Na and Na2    
+
+	Nonce_t   Na , Na2; 
+    getNonce4Amal(1, Na);
+    getNonce4Amal(2, Na2);
+
+    fprintf( log , "\nAmal will use these Nonces:  Na  and Na2\n"  ) ;
+	// Use getNonce4Amal () to get Amal's 1st and second nonces into Na and Na2, respectively
+	// BIO_dump Na indented 4 spaces to the righ
+    BIO_dump_indent_fp(log, Na, sizeof(Na), 4);
+    fprintf( log , "\n" );
+	// BIO_dump Na2 indented 4 spaces to the righ
+    BIO_dump_indent_fp(log, Na2, sizeof(Na2), 4);
+    fprintf( log , "\n") ; 
+
+    fflush( log ) ;
+
+    //*************************************
+    // Construct & Send    Message 1
+    //*************************************
+    BANNER( log ) ;
+    fprintf( log , "         MSG1 New\n");
+    BANNER( log ) ;
+
+    char *IDa = "Amal is Hope", *IDb = "Basim is Smiley" ;
+    size_t  LenMsg1 ;
+    uint8_t  *msg1 ;
+    LenMsg1 = MSG1_new( log , &msg1 , IDa , IDb , Na ) ;
+    
+    // Send MSG1 to KDC via the appropriate pipe
+    write(fd_A2K, msg1, LenMsg1);
+
+   fprintf( log , "Amal sent message 1 ( %lu bytes ) to the KDC with:\n    "
+                   "IDa ='%s'\n    "
+                   "IDb = '%s'\n" , LenMsg1 , IDa , IDb ) ;
+    fprintf( log , "    Na ( %lu Bytes ) is:\n" , NONCELEN ) ;
+    BIO_dump_indent_fp(log, Na, sizeof(Na), 4);
+    fflush( log ) ;
+
+    // Deallocate any memory allocated for msg1
+    free(msg1);
     
     
     
