@@ -782,7 +782,7 @@ size_t MSG2_new( FILE *log , uint8_t **msg2, const myKey_t *Ka , const myKey_t *
     }
 
     // Copy the encrypted ciphertext to Caller's msg2 buffer.
-    memcpy(*msg2, ciphertext2, LenMsg2);
+    // memcpy(*msg2, ciphertext2, LenMsg2);
 
     fprintf( log , "\nThe following Encrypted MSG2 ( %lu bytes ) has been"
                    " created by MSG2_new():  \n" ,  LenMsg2  ) ;
@@ -817,54 +817,54 @@ void MSG2_receive( FILE *log , int fd , const myKey_t *Ka , myKey_t *Ks, char **
 {
 // Ks || L(IDb) || IDb  || Na || L(TktCipher) || TktCipher
 
-    fprintf(log, "hello i work");
-
-    // size_t LenMsg2, LenB, tktPlain;
-    // uint8_t *p;
-
-    // LenMsg2 = read(fd, ciphertext, sizeof(ciphertext));
-    // if(LenMsg2 <= 0) {
-    //     fprintf( log , "Failed to read MSG2\n");
-    //     exitError("Failed to read MSG2\n");
-    // }
-    // tktPlain = decrypt(ciphertext, LenMsg2, Ka->key, Ka->iv, decryptext);
-
-    // p = decryptext;
+    size_t LenMsg2, LenB, tktPlain;
     
-	// // use the pointer p to traverse through msg1 and fill the successive parts of the msg 
+    uint8_t *p;
+    uint8_t msg2;
+
+    LenMsg2 = read(fd, &msg2, sizeof(msg2));
+    if(LenMsg2 <= 0) {
+        fprintf( log , "Failed to read MSG2\n");
+        exitError("Failed to read MSG2\n");
+    }
+    tktPlain = decrypt(ciphertext, LenMsg2, Ka->key, Ka->iv, decryptext);
+
+    p = decryptext;
     
-    // memcpy(p, Ks, KEYSIZE);
-    // p += sizeof(myKey_t);
-
-    // memcpy(p, *Na, NONCELEN);
-    // p += NONCELEN;
-
-    // if ((*IDb = (char *) malloc(LenB)) == NULL)
-    // {
-    //     fprintf( log , "Out of Memory allocating %lu bytes for IDB in MSG2_receive() "
-    //                    "... EXITING\n" , LenB );
-    //     fflush( log ) ;  fclose( log ) ;
-    //     exitError( "Out of Memory allocating IDB in MSG2_receive()" );
-    // }
-
-    // memcpy(p, IDb, LenB);
-    // p += LenB;
-
-    // *((uint32_t *) p) = **Na;
-    // p += NONCELEN;
+	// use the pointer p to traverse through msg1 and fill the successive parts of the msg 
     
-    // *((unsigned long *) p) = *lenTktCipher;
-    // p += sizeof(size_t);
+    memcpy(p, Ks, KEYSIZE);
+    p += sizeof(myKey_t);
 
-    // if ((*tktCipher = (uint8_t *) malloc(*lenTktCipher)) == NULL)
-    // {
-    //     fprintf( log , "Out of Memory allocating %lu bytes for tktCipher in MSG2_receive() "
-    //                    "... EXITING\n" , *lenTktCipher );
-    //     fflush( log ) ;  fclose( log ) ;
-    //     exitError( "Out of Memory allocating tktCipher in MSG2_receive()" );
-    // }
+    memcpy(p, *Na, NONCELEN);
+    p += NONCELEN;
 
-    // memcpy(p, tktCipher, *lenTktCipher);
+    if ((*IDb = (char *) malloc(LenB)) == NULL)
+    {
+        fprintf( log , "Out of Memory allocating %lu bytes for IDB in MSG2_receive() "
+                       "... EXITING\n" , LenB );
+        fflush( log ) ;  fclose( log ) ;
+        exitError( "Out of Memory allocating IDB in MSG2_receive()" );
+    }
+
+    memcpy(p, IDb, LenB);
+    p += LenB;
+
+    *((uint32_t *) p) = **Na;
+    p += NONCELEN;
+    
+    *((unsigned long *) p) = *lenTktCipher;
+    p += sizeof(size_t);
+
+    if ((*tktCipher = (uint8_t *) malloc(*lenTktCipher)) == NULL)
+    {
+        fprintf( log , "Out of Memory allocating %lu bytes for tktCipher in MSG2_receive() "
+                       "... EXITING\n" , *lenTktCipher );
+        fflush( log ) ;  fclose( log ) ;
+        exitError( "Out of Memory allocating tktCipher in MSG2_receive()" );
+    }
+
+    strcpy(p, *tktCipher);
 
     // // 1) Read Ka from the pipe
 
@@ -931,19 +931,19 @@ void MSG2_receive( FILE *log , int fd , const myKey_t *Ka , myKey_t *Ks, char **
     // LenMsg2 += sizeof(size_t);
 
     // // 7) Allocate memory for TktCipher
-    // if ((*tktCipher = (uint8_t *) malloc(lenTktCipher)) == NULL)
+    // if ((tktCipher = (uint8_t *) malloc(&lenTktCipher)) == NULL)
     // {
     //     fprintf( log , "Out of Memory allocating %lu bytes for tktCipher in MSG2_receive() "
-    //                    "... EXITING\n" , lenTktCipher );
+    //                    "... EXITING\n" , *lenTktCipher );
     //     fflush( log ) ;  fclose( log ) ;
     //     exitError( "Out of Memory allocating tktCipher in MSG2_receive()" );
     // }
 
  	// // 8) Read TktCipher from the pipe
-    // if (read(fd, *tktCipher, lenTktCipher) < lenTktCipher)
+    // if (read(fd, *tktCipher, *lenTktCipher) < lenTktCipher)
     // {
     //     fprintf( log , "Unable to receive all %lu bytes of tktCipher in MSG2_receive() "
-    //                    "... EXITING\n" , lenTktCipher );
+    //                    "... EXITING\n" , *lenTktCipher );
     //     fflush( log ) ;  fclose( log ) ;
     //     exitError( "Unable to receive all bytes of tktCipher in MSG2_receive()" );
     // }
@@ -951,10 +951,9 @@ void MSG2_receive( FILE *log , int fd , const myKey_t *Ka , myKey_t *Ks, char **
 
 
 
-    // fprintf( log ,"MSG2_receive() got the following Encrypted MSG2 ( %lu bytes ) Successfully\n" 
-    //              , LenMsg2 );
-    // BIO_dump_indent_fp( log, ciphertext, LenMsg2, 4);
-
+    fprintf( log ,"MSG2_receive() got the following Encrypted MSG2 ( %lu bytes ) Successfully\n" 
+                 , LenMsg2 );
+    BIO_dump_indent_fp( log, ciphertext, LenMsg2, 4);
 
 
 }
@@ -997,7 +996,7 @@ size_t MSG3_new( FILE *log , uint8_t **msg3 , const size_t lenTktCipher , const 
     *((unsigned long *) p) = lenTktCipher;
     p += sizeof(size_t);
     
-    strcpy(p, tktCipher);
+    memcpy(p, tktCipher, lenTktCipher);
     p += lenTktCipher;
 
     *((uint32_t *) p) = **Na2;
@@ -1025,15 +1024,16 @@ void MSG3_receive( FILE *log , int fd , const myKey_t *Kb , myKey_t *Ks , char *
 // L(TktCipher)  || TktCipher  ||  Na2
 
     size_t LenMsg3;
-    size_t lenTktCipher, lenTktPlain;
+    size_t lenTktCipher, lenTktPlain, LenA;
     uint8_t *tktCipher;
+    uint8_t *p;
 
 
     // 1) Read lenTktCipher from the pipe
     if (read(fd, &lenTktCipher, sizeof(size_t)) < sizeof(size_t))
     {
         fprintf( log , "Unable to receive all %lu bytes of lenTktCipher(tktCipher) "
-                       "in MSG#_receive() ... EXITING\n" , LENSIZE );
+                       "in MSG3_receive() ... EXITING\n" , LENSIZE );
         
         fflush( log ) ;  fclose( log ) ;   
         exitError( "Unable to receive all bytes of lenTktCipher in MSG3_receive()" );
@@ -1070,6 +1070,31 @@ void MSG3_receive( FILE *log , int fd , const myKey_t *Kb , myKey_t *Ks , char *
     }
     LenMsg3 += sizeof(Nonce_t);
 
+    memcpy(ciphertext, tktCipher, lenTktCipher);
+
+    lenTktPlain = decrypt(ciphertext, lenTktCipher, Kb->key, Kb->iv, decryptext);
+
+    p = decryptext;
+
+    memcpy(Ks, p, KEYSIZE);
+    p += KEYSIZE;
+	
+    memcpy(&LenA, p, LENSIZE);
+    p += LENSIZE;
+
+    if ((*IDa = (char *) malloc(LenA)) == NULL)
+    {
+        fprintf( log , "Out of Memory allocating %lu bytes for IDA in MSG2_receive() "
+                       "... EXITING\n" , LenA);
+        fflush( log ) ;  fclose( log ) ;
+        exitError( "Out of Memory allocating IDA in MSG2_receive()" );
+    }
+    memcpy(*IDa, p, LenA);
+	
+	// fprintf( log ,"    IDa = '%s'\n", *IDa );
+	
+    p += LenA;
+
 
     fprintf( log ,"The following Encrypted TktCipher ( %lu bytes ) was received by MSG3_receive()\n" 
                  , lenTktCipher  );
@@ -1094,42 +1119,42 @@ void MSG3_receive( FILE *log , int fd , const myKey_t *Kb , myKey_t *Ks , char *
 
 // // Returns the size of Message #4 after being encrypted by Ks in bytes
 
-// size_t  MSG4_new( FILE *log , uint8_t **msg4, const myKey_t *Ks , Nonce_t *fNa2 , Nonce_t *Nb )
-// {
+size_t  MSG4_new( FILE *log , uint8_t **msg4, const myKey_t *Ks , Nonce_t *fNa2 , Nonce_t *Nb )
+{
 
-//     size_t LenMsg4 ;
+    size_t LenMsg4 ;
 
-//     // Construct MSG4 Plaintext = { f(Na2)  ||  Nb }
-//     // Use the global scratch buffer plaintext[] for MSG4 plaintext and fill it in with component values
+    // Construct MSG4 Plaintext = { f(Na2)  ||  Nb }
+    // Use the global scratch buffer plaintext[] for MSG4 plaintext and fill it in with component values
 
 
-//     // Now, encrypt MSG4 plaintext using the session key Ks;
-//     // Use the global scratch buffer ciphertext[] to collect the result. Make sure it fits.
+    // Now, encrypt MSG4 plaintext using the session key Ks;
+    // Use the global scratch buffer ciphertext[] to collect the result. Make sure it fits.
 
-//     // Now allocate a buffer for the caller, and copy the encrypted MSG4 to it
-//     // *msg4 = malloc( .... ) ;
+    // Now allocate a buffer for the caller, and copy the encrypted MSG4 to it
+    // *msg4 = malloc( .... ) ;
 
 
 
     
-//     fprintf( log , "The following Encrypted MSG4 ( %lu bytes ) has been"
-//                    " created by MSG4_new ():  \n" , LenMsg4 ) ;
-//     // BIO_dump_indent_fp( log , *msg4 , ... ) ;
+    fprintf( log , "The following Encrypted MSG4 ( %lu bytes ) has been"
+                   " created by MSG4_new ():  \n" , LenMsg4 ) ;
+    // BIO_dump_indent_fp( log , *msg4 , ... ) ;
 
-//     return LenMsg4 ;
+    return LenMsg4 ;
     
 
-// }
+}
 
 // //-----------------------------------------------------------------------------
 // // Receive Message #4 by Amal from Basim
 // // Parse the incoming encrypted msg4 into the values rcvd_fNa2 and Nb
 
-// void  MSG4_receive( FILE *log , int fd , const myKey_t *Ks , Nonce_t *rcvd_fNa2 , Nonce_t *Nb )
-// {
+void  MSG4_receive( FILE *log , int fd , const myKey_t *Ks , Nonce_t *rcvd_fNa2 , Nonce_t *Nb )
+{
 
 
-// }
+}
 
 // //-----------------------------------------------------------------------------
 // // Build a new Message #5 from Amal to Basim
@@ -1138,67 +1163,67 @@ void MSG3_receive( FILE *log , int fd , const myKey_t *Kb , myKey_t *Ks , char *
 // // All other arguments have been initialized by caller
 // // Returns the size of Message #5  in bytes
 
-// size_t  MSG5_new( FILE *log , uint8_t **msg5, const myKey_t *Ks ,  Nonce_t *fNb )
-// {
-//     size_t  LenMSG5cipher  ;
+size_t  MSG5_new( FILE *log , uint8_t **msg5, const myKey_t *Ks ,  Nonce_t *fNb )
+{
+    size_t  LenMSG5cipher  ;
 
-//     // Construct MSG5 Plaintext  = {  f(Nb)  }
-//     // Use the global scratch buffer plaintext[] for MSG5 plaintext. Make sure it fits 
-
-
-//     // Now, encrypt( Ks , {plaintext} );
-//     // Use the global scratch buffer ciphertext[] to collect result. Make sure it fits.
+    // Construct MSG5 Plaintext  = {  f(Nb)  }
+    // Use the global scratch buffer plaintext[] for MSG5 plaintext. Make sure it fits 
 
 
-//     // Now allocate a buffer for the caller, and copy the encrypted MSG5 to it
-//     // *msg5 = malloc( ... ) ;
+    // Now, encrypt( Ks , {plaintext} );
+    // Use the global scratch buffer ciphertext[] to collect result. Make sure it fits.
 
 
-//     fprintf( log , "The following Encrypted MSG5 ( %lu bytes ) has been"
-//                    " created by MSG5_new ():  \n" , LenMSG5cipher ) ;
-//     BIO_dump_indent_fp( log , *msg5 , LenMSG5cipher , 4 ) ;    fprintf( log , "\n" ) ;    
-//     fflush( log ) ;    
+    // Now allocate a buffer for the caller, and copy the encrypted MSG5 to it
+    // *msg5 = malloc( ... ) ;
 
-//     return LenMSG5cipher ;
 
-// }
+    fprintf( log , "The following Encrypted MSG5 ( %lu bytes ) has been"
+                   " created by MSG5_new ():  \n" , LenMSG5cipher ) ;
+    BIO_dump_indent_fp( log , *msg5 , LenMSG5cipher , 4 ) ;    fprintf( log , "\n" ) ;    
+    fflush( log ) ;    
+
+    return LenMSG5cipher ;
+
+}
 
 // //-----------------------------------------------------------------------------
 // // Receive Message 5 by Basim from Amal
 // // Parse the incoming msg5 into the value fNb
 
-// void  MSG5_receive( FILE *log , int fd , const myKey_t *Ks , Nonce_t *fNb )
-// {
+void  MSG5_receive( FILE *log , int fd , const myKey_t *Ks , Nonce_t *fNb )
+{
 
-//     size_t    LenMSG5cipher ;
+    size_t    LenMSG5cipher ;
     
-//     // Read Len( Msg5 ) followed by reading Msg5 itself
-//     // Always make sure read() and write() succeed
-//     // Use the global scratch buffer ciphertext[] to receive encrypted MSG5.
-//     // Make sure it fits.
+    // Read Len( Msg5 ) followed by reading Msg5 itself
+    // Always make sure read() and write() succeed
+    // Use the global scratch buffer ciphertext[] to receive encrypted MSG5.
+    // Make sure it fits.
 
 
-//     fprintf( log ,"The following Encrypted MSG5 ( %lu bytes ) has been received:\n" , LenMSG5cipher );
+    fprintf( log ,"The following Encrypted MSG5 ( %lu bytes ) has been received:\n" , LenMSG5cipher );
 
 
-//     // Now, Decrypt MSG5 using Ks
-//     // Use the global scratch buffer decryptext[] to collect the results of decryption
-//     // Make sure it fits
+    // Now, Decrypt MSG5 using Ks
+    // Use the global scratch buffer decryptext[] to collect the results of decryption
+    // Make sure it fits
 
 
-//     // Parse MSG5 into its components f( Nb )
+    // Parse MSG5 into its components f( Nb )
 
 
 
-// }
+}
 
 // //-----------------------------------------------------------------------------
 // // Utility to compute r = F( n ) for Nonce_t objects
 // // For our purposes, F( n ) = ( n + 1 ) mod  2^b  
 // // where b = number of bits in a Nonce_t object
 // // The value of the nonces are interpretted as BIG-Endian unsigned integers
-// void     fNonce( Nonce_t r , Nonce_t n )
-// {
-//     // Note that the nonces are store in Big-Endian byte order
-//     // This affects how you do arithmetice on the noces, e.g. when you add 1
-// }
+void     fNonce( Nonce_t r , Nonce_t n )
+{
+    // Note that the nonces are store in Big-Endian byte order
+    // This affects how you do arithmetice on the noces, e.g. when you add 1
+}

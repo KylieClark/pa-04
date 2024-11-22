@@ -157,7 +157,9 @@ int main ( int argc , char * argv[] )
     LenMsg2 = MSG2_new( log , &msg2 , &Ka , &Kb , &Ks , IDa , IDb , &Na ) ;
     
     // Send MSG2 to A via the appropriate pipe
-    write(fd_K2A, msg2, LenMsg2);
+    if (write(fd_K2A, msg2, LenMsg2) < LenMsg2) {
+        fprintf(log, "write failed for fd_K2A");
+    }
 
     // Deallocate any memory allocated for msg1
     free(msg2);
