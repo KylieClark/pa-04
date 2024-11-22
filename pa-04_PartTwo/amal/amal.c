@@ -198,6 +198,7 @@ int main ( int argc , char * argv[] )
     fprintf( log , "    The following MSG3 ( %lu bytes ) has been created by MSG3_new ():\n", LenMsg3);
     BIO_dump_indent_fp(log, msg3, LenMsg3, 4);
     fprintf( log , "Amal Sent the Message 3 ( %lu bytes ) to Basim\n", LenMsg3);
+    BIO_dump_indent_fp(log, msg3, LenMsg3, 4);
 
     fflush( log ) ;
 

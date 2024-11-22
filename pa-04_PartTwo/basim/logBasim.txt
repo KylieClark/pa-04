@@ -2,7 +2,7 @@
 Starting Basim
 ***************************************************
 
-<readFr. Amal> FD=7 , <sendTo Amal> FD=10
+<readFrom Amal> FD=7 , <sendTo Amal> FD=10
 
 Basim has this Master Kb { key , IV }
     0000 - 72 17 92 80 3c 7d 1d c5-6a 13 78 1d e0 55 10 21   r...<}..j.x..U.!
@@ -16,4 +16,12 @@ Basim will use this Nonce:  Nb
 ***************************************************
          MSG3 Receive
 ***************************************************
-Unable to receive all 8 bytes of lenTktCipher from FD 7 in MSG3_receive() ... EXITING
+The following Encrypted TktCipher ( 80 bytes ) was received by MSG3_receive()
+    0000 - 00 00 00 00 00 00 00 00-00 00 00 00 00 00 00 00   ................
+    0010 - 00 00 00 00 00 00 00 00-00 00 00 00 00 00 00 00   ................
+    0020 - 00 00 00 00 00 00 00 00-00 00 00 00 00 00 00 00   ................
+    0030 - 00 00 00 00 00 00 00 00-00 00 00 00 00 00 00 00   ................
+    0040 - 00 00 00 00 00 00 00 00-00 00 00 00 00 00 00 00   ................
+
+Here is the Decrypted Ticket ( 110165094980664 bytes ) in MSG3_receive():
+

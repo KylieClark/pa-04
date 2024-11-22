@@ -124,7 +124,7 @@ int main ( int argc , char * argv[] )
     myKey_t Ks;
     
     // Get MSG3 from Amal
-    MSG3_receive( log , fd_A2B , &Kb , &Ks , IDa , Na2) ;
+    MSG3_receive( log , fd_A2B , &Kb , &Ks , &IDa , &Na2) ;
 
     fprintf( log , "\nBasim received Message 3 from Amal with the following content:\n") ;
     fprintf( log , "    Ks { Key , IV } (%lu Bytes ) is:\n" , sizeof(Ks) ) ;
