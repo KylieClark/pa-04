@@ -138,6 +138,29 @@ int main ( int argc , char * argv[] )
     fprintf( log , "         MSG2 New\n");
     BANNER( log ) ;
 
+    myKey_t Ks;
+    int success3 = getKeyFromFile("kdc/sessionKey.bin", &Ks);
+    if (success < 0) {
+        fprintf(stderr, "\nCould not get KDC's Session key & IV.\n");
+        fprintf(log, "\nCould not get KDC's Session key & IV.\n");
+        exit(-1);
+    }
+    size_t  LenMsg2 ;
+    uint8_t  *msg2 ;
+    LenMsg2 = MSG2_new( log , &msg2 , &Ka , &Kb , &Ks , IDa , IDb , Na ) ;
+    
+    // Send MSG2 to A via the appropriate pipe
+    write(fd_K2A, msg2, LenMsg2);
+
+    fprintf( log , "KDC: created this session key Ks { Key , IV } (%lu Bytes ) is: \n ", sizeof(Ks)) ;
+    BIO_dump_indent_fp(log, &Ks, sizeof(Ks), 4);
+    fprintf( log , "\nPlaintext Ticket (%lu Bytes) is:\n" , LenMsg2) ;
+    BIO_dump_indent_fp(log, msg2, sizeof(msg2), 4);
+    fflush( log ) ;
+
+    // Deallocate any memory allocated for msg1
+    free(msg2);
+
 
     //*************************************   
     // Final Clean-Up

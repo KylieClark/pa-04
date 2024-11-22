@@ -136,7 +136,7 @@ int main ( int argc , char * argv[] )
     // Send MSG1 to KDC via the appropriate pipe
     write(fd_A2K, msg1, LenMsg1);
 
-   fprintf( log , "Amal sent message 1 ( %lu bytes ) to the KDC with:\n    "
+    fprintf( log , "Amal sent message 1 ( %lu bytes ) to the KDC with:\n    "
                    "IDa ='%s'\n    "
                    "IDb = '%s'\n" , LenMsg1 , IDa , IDb ) ;
     fprintf( log , "    Na ( %lu Bytes ) is:\n" , NONCELEN ) ;
@@ -156,6 +156,27 @@ int main ( int argc , char * argv[] )
     fprintf( log , "         MSG2 Receive\n");
     BANNER( log ) ;
 
+    size_t *lenTktCipher; 
+    uint8_t **tktCipher;
+    myKey_t Ks;
+    
+    // Get MSG2 from KDC
+    MSG2_receive( log , fd_K2A , &Ka , &Ks, &IDb , &Na , lenTktCipher, tktCipher) ;
+
+
+    fprintf( log , "\nAmal decrypted message 2 from the KDC into the following:\n") ;
+    fprintf( log , "    Ks { Key , IV } (%lu Bytes ) is:\n", sizeof(Ks)) ;
+     // BIO_dump the Ks
+    BIO_dump_indent_fp(log , &Ks , sizeof(Ks) , 4);
+    fprintf( log , "\n    IDb (%lu Bytes):   ..... MATCH\n", strlen(IDb));
+    BIO_dump_indent_fp(log , IDb , strlen(IDb) , 4);
+    fprintf( log , "\n    Received Copy of Na (%lu bytes):    >>>> VALID\n", NONCELEN);
+    BIO_dump_indent_fp(log , Na , sizeof(Na) , 4);
+    fprintf( log , "\n    Encrypted Ticket (%lu bytes):\n", *lenTktCipher);
+    BIO_dump_indent_fp(log , tktCipher , *lenTktCipher , 4);
+
+    fflush( log ) ;
+
     //*************************************
     // Construct & Send    Message 3
     //*************************************
@@ -163,6 +184,25 @@ int main ( int argc , char * argv[] )
     BANNER( log ) ;
     fprintf( log , "         MSG3 New\n");
     BANNER( log ) ;
+
+    size_t  LenMsg3 ;
+    uint8_t  *msg3 ;
+    LenMsg3 = MSG3_new( log , &msg3 , *lenTktCipher , *tktCipher , &Na2 ) ;
+    
+    // Send MSG3 to B via the appropriate pipe
+    write(fd_A2B, msg3, LenMsg3);
+
+    fprintf( log , "Amal is sending this to Basim in Message 3:\n") ;
+    fprintf( log , "    Na2 in Message 3:\n") ;
+    BIO_dump_indent_fp(log, Na2, sizeof(Na), 4);
+    fprintf( log , "    The following MSG3 ( %lu bytes ) has been created by MSG3_new ():\n", LenMsg3);
+    BIO_dump_indent_fp(log, msg3, LenMsg3, 4);
+    fprintf( log , "Amal Sent the Message 3 ( %lu bytes ) to Basim\n", LenMsg3);
+
+    fflush( log ) ;
+
+    // Deallocate any memory allocated for msg1
+    free(msg1);
 
     //*************************************
     // Receive   & Process Message 4
