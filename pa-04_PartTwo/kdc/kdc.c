@@ -150,8 +150,9 @@ int main ( int argc , char * argv[] )
 
     fprintf( log , "KDC: created this session key Ks { Key , IV } (%lu Bytes ) is: \n ", sizeof(Ks)) ;
     BIO_dump_indent_fp(log, &Ks, sizeof(Ks), 4);
-    fprintf( log , "\nPlaintext Ticket (%lu Bytes) is:\n" , LenMsg2) ;
+    fprintf( log , "\nPlaintext Ticket (%lu Bytes) is\n" , LenMsg2) ;
     BIO_dump_indent_fp(log, msg2, sizeof(msg2), 4);
+    fprintf ( log, "\n");
     fflush( log ) ;
 
     LenMsg2 = MSG2_new( log , &msg2 , &Ka , &Kb , &Ks , IDa , IDb , &Na ) ;
