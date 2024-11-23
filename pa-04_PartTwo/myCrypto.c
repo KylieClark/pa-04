@@ -817,13 +817,14 @@ void MSG2_receive( FILE *log , int fd , const myKey_t *Ka , myKey_t *Ks, char **
 {
 // Ks || L(IDb) || IDb  || Na || L(TktCipher) || TktCipher
 
-    if (!log || fd < 0 || !Ka || !Ks || !IDb || !Na || !lenTktCipher || !tktCipher) {
-        exitError("Received null pointers or invalid file descriptor in MSG2_receive\n");
-    }
+    // if (!log || fd < 0 || !Ka || !Ks || !IDb || !Na || !lenTktCipher || !tktCipher) {
+    //     exitError("Received null pointers or invalid file descriptor in MSG2_receive\n");
+    // }
 	
 	size_t LenMsg2 = 0, readML, LenB, tktPlain;
     uint8_t *p;
     uint8_t *msg2;
+
 
 	// Read length of msg2 first
     if (read(fd, &readML, sizeof(size_t)) < sizeof(size_t))
@@ -847,9 +848,10 @@ void MSG2_receive( FILE *log , int fd , const myKey_t *Ka , myKey_t *Ks, char **
     fprintf(log, "\n");
 	
 	fflush(log);
+    
 	
 	tktPlain = decrypt(ciphertext, LenMsg2, Ka->key, Ka->iv, decryptext);
-    if (readML <= 0) {
+    if (tktPlain <= 0) {
         exitError("Failed to decrypt MSG2\n");
     }
 	
@@ -861,6 +863,7 @@ void MSG2_receive( FILE *log , int fd , const myKey_t *Ka , myKey_t *Ks, char **
     memcpy(&LenB, p, LENSIZE);
     p += LENSIZE;
 
+
     if ((*IDb = (char *) malloc(LenB)) == NULL)
     {
         fprintf( log , "Out of Memory allocating %lu bytes for IDB in MSG2_receive() "
@@ -868,108 +871,23 @@ void MSG2_receive( FILE *log , int fd , const myKey_t *Ka , myKey_t *Ks, char **
         fflush( log ) ;  fclose( log ) ;
         exitError( "Out of Memory allocating IDB in MSG2_receive()" );
     }
+
     memcpy(*IDb, p, LenB);
     p += LenB;
 
-    memcpy(*Na, p, NONCELEN);
+    memcpy(Na, p, NONCELEN);
     p += NONCELEN;
 
-    memcpy(lenTktCipher, p, sizeof(size_t));
-    p += sizeof(size_t);
+    *lenTktCipher = *((size_t *)p);
+    p += LENSIZE;
 
-    if ((*tktCipher = (uint8_t *) malloc(*lenTktCipher)) == NULL)
-    {
-        fprintf( log , "Out of Memory allocating %lu bytes for tktCipher in MSG2_receive() "
-                       "... EXITING\n" , LenB);
-        fflush( log ) ;  fclose( log ) ;
-        exitError( "Out of Memory allocating tktCipher in MSG2_receive()" );
+    *tktCipher = (uint8_t *) malloc(*lenTktCipher);
+    if (!*tktCipher) {
+        exitError("Memory allocation failed for TktCipher\n");
     }
+    
     memcpy(*tktCipher, p, *lenTktCipher);
-
-
-    fprintf( log ,"MSG2_receive() got the following Encrypted MSG2 ( %lu bytes ) Successfully\n" 
-                 , LenMsg2 );
-    BIO_dump_indent_fp( log, ciphertext, LenMsg2, 4);
-    fprintf ( log, "\n");
-
-        // // 2) Allocate memory for msg2
-    // if ((msg2 = (uint8_t *)malloc(readML)) == NULL)
-    // {
-    //     fprintf( log , "Out of Memory allocating %lu bytes for msg2 in MSG2_receive() "
-    //                    "... EXITING\n" , lenTktCipher );
-    //     fflush( log ) ;  fclose( log ) ;
-    //     exitError( "Out of Memory allocating ml2 in MSG2_receive()" );
-    // }
-
- 	// // 3) Read LenB from the pipe
-    // if (read(fd, LenB, sizeof(size_t)) < sizeof(size_t))
-    // {
-    //     fprintf( log , "Unable to receive all %lu bytes of LenB in MSG2_receive() "
-    //                    "... EXITING\n" , lenTktCipher );
-    //     fflush( log ) ;  fclose( log ) ;
-    //     exitError( "Unable to receive all bytes of LenB in MSG2_receive()" );
-    // }
-    // LenMsg2 += sizeof(size_t);
-
-    // // 4) Allocate memory for LenB
-    // if ((msg2 = (uint8_t *)malloc(readML)) == NULL)
-    // {
-    //     fprintf( log , "Out of Memory allocating %lu bytes for msg2 in MSG2_receive() "
-    //                    "... EXITING\n" , lenTktCipher );
-    //     fflush( log ) ;  fclose( log ) ;
-    //     exitError( "Out of Memory allocating ml2 in MSG2_receive()" );
-    // }
-
- 	// // 5) Read IDb from the pipe
-    // if (read(fd, IDb, LenB) < LenB)
-    // {
-    //     fprintf( log , "Unable to receive all %lu bytes of LenB in MSG2_receive() "
-    //                    "... EXITING\n" , lenTktCipher );
-    //     fflush( log ) ;  fclose( log ) ;
-    //     exitError( "Unable to receive all bytes of LenB in MSG2_receive()" );
-    // }
-    // LenMsg2 += LenB;
-
-    // // 6) Read Na2 from the pipe
-    // if (read(fd, Na, sizeof(Nonce_t)) < sizeof(Nonce_t))
-    // {
-    //     fprintf( log , "Unable to receive all %lu bytes of Na "
-    //                    "in MSG2_receive() ... EXITING\n" , NONCELEN );
-        
-    //     fflush( log ) ;  fclose( log ) ;   
-    //     exitError( "Unable to receive all bytes of Na in MSG2_receive()" );
-    // }
-    // LenMsg2 += sizeof(Nonce_t);
-
-    // // 7) Read lenTktCipher from the pipe
-    // if (read(fd, &lenTktCipher, sizeof(size_t)) < sizeof(size_t))
-    // {
-    //     fprintf( log , "Unable to receive all %lu bytes of lenTktCipher(tktCipher) "
-    //                    "in MSG2_receive() ... EXITING\n" , LENSIZE );
-        
-    //     fflush( log ) ;  fclose( log ) ;   
-    //     exitError( "Unable to receive all bytes of lenTktCipher in MSG2_receive()" );
-    // }
-    // LenMsg2 += sizeof(size_t);
-
-    // // 8) Allocate memory for TktCipher
-    // if ((tktCipher = (uint8_t *)malloc(lenTktCipher)) == NULL)
-    // {
-    //     fprintf( log , "Out of Memory allocating %lu bytes for tktCipher in MSG2_receive() "
-    //                    "... EXITING\n" , lenTktCipher );
-    //     fflush( log ) ;  fclose( log ) ;
-    //     exitError( "Out of Memory allocating tktCipher in MSG2_receive()" );
-    // }
-
- 	// // 9) Read TktCipher from the pipe
-    // if (read(fd, tktCipher, lenTktCipher) < lenTktCipher)
-    // {
-    //     fprintf( log , "Unable to receive all %lu bytes of tktCipher in MSG2_receive() "
-    //                    "... EXITING\n" , lenTktCipher );
-    //     fflush( log ) ;  fclose( log ) ;
-    //     exitError( "Unable to receive all bytes of tktCipher in MSG2_receive()" );
-    // }
-    // LenMsg2 += *lenTktCipher;
+    
 
 }
 
