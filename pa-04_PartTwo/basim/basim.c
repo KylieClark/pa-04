@@ -70,7 +70,7 @@ int main ( int argc , char * argv[] )
     fprintf( log , "Starting Basim\n"  ) ;
     BANNER( log ) ;
 
-    fprintf( log , "\n<readFrom Amal> FD=%d , <sendTo Amal> FD=%d\n\n" , fd_A2B , fd_B2A );
+    fprintf( log , "\n<readFr. Amal> FD=%d , <sendTo Amal> FD=%d\n\n" , fd_A2B , fd_B2A );
 
     // Get Basim's master keys with the KDC
     myKey_t   Kb ;    // Basim's master key with the KDC    
