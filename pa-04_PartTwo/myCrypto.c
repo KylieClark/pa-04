@@ -751,9 +751,9 @@ size_t MSG2_new( FILE *log , uint8_t **msg2, const myKey_t *Ka , const myKey_t *
     p += KEYSIZE;
     LenMsg2e += KEYSIZE;
 
-    memcpy(p, &LenB, LENSIZE);
+    *((size_t *)p) = LenB;
     p += LENSIZE;
-	LenMsg2e += LENSIZE;
+    LenMsg2e += LENSIZE;
 
     memcpy(p, IDb, LenB);
     p += LenB;
@@ -763,9 +763,9 @@ size_t MSG2_new( FILE *log , uint8_t **msg2, const myKey_t *Ka , const myKey_t *
     p += NONCELEN;
     LenMsg2e += NONCELEN;
 
-    memcpy(p, &LenTktCipher, LENSIZE);
-    p += LENSIZE;
-	LenMsg2e += LENSIZE;
+    *((size_t *)p) = LenTktCipher;
+    p += sizeof(LenTktCipher);
+    LenMsg2e += sizeof(LenTktCipher);
 
     memcpy(p, ciphertext, LenTktCipher);
     p += LenTktCipher;
