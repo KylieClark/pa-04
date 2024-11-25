@@ -143,6 +143,21 @@ int main ( int argc , char * argv[] )
     BANNER( log ) ;
     fprintf( log , "         MSG4 New\n");
     BANNER( log ) ;
+    uint8_t *msg4;
+    Nonce_t adj_nonce;
+    fNonce(adj_nonce, Na2);
+
+    fprintf(log, "Basim is sending this f( Na2 ) in MSG4:\n");
+    BIO_dump_indent_fp(log, &adj_nonce, sizeof(adj_nonce), 4);
+
+    fprintf(log, "\nBasim is sending this nonce Nb in MSG4:\n");
+    BIO_dump_indent_fp(log, &Nb, sizeof(Nb), 4);
+    fprintf(log, "\n");
+
+    size_t msg4_sz = MSG4_new(log, &msg4, &Ks, &adj_nonce, &Nb);
+
+    write(fd_B2A, &msg4_sz, sizeof(msg4_sz));
+    write(fd_B2A, msg4, msg4_sz);
 
     //*************************************
     // Receive   & Process Message 5
@@ -152,11 +167,26 @@ int main ( int argc , char * argv[] )
     fprintf( log , "         MSG5 Receive\n");
     BANNER( log ) ;
 
+    Nonce_t expected;
+    fNonce(expected, Nb);
+    fprintf(log, "Basim is expecting back this f( Nb ) in MSG5:\n");
+    BIO_dump_indent_fp(log, expected, sizeof(*expected), 4);
+
+    MSG5_receive(log, fd_A2B, &Ks, &Nb);
+
+
+    if (*Nb == *expected)
+        fprintf(log, "\nBasim received Message 5 from Amal with this f( Nb ): >>>> VALID\n");
+    else
+        fprintf(log, "\nBasim received Message 5 from Amal with this f( Nb ): >>>> INVALID\n");
+
+    BIO_dump_indent_fp(log, &Nb, sizeof(Nb), 4);
+
     //*************************************   
     // Final Clean-Up
     //*************************************
 end_:
-    fprintf( log , "\nBasim has terminated normally. Goodbye\n" ) ;
+    fprintf( log , "\n\nBasim has terminated normally. Goodbye\n") ;
     fclose( log ) ;  
 
     return 0 ;

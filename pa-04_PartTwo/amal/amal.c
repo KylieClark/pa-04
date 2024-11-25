@@ -165,7 +165,7 @@ int main ( int argc , char * argv[] )
     MSG2_receive( log , fd_K2A , &Ka , &Ks, &IDb , &Na , &lenTktCipher, &tktCipher) ;
 
 
-    fprintf( log , "\nAmal decrypted message 2 from the KDC into the following:\n") ;
+    fprintf( log , "Amal decrypted message 2 from the KDC into the following:\n") ;
     fprintf( log , "    Ks { Key , IV } (%lu Bytes ) is:\n", KEYSIZE) ;
     // BIO_dump the Ks
     BIO_dump_indent_fp(log , &Ks , KEYSIZE , 4);
@@ -215,6 +215,27 @@ int main ( int argc , char * argv[] )
     BANNER( log ) ;
     fprintf( log , "         MSG4 Receive\n");
     BANNER( log ) ;
+    Nonce_t expected;
+    fNonce(expected, Na2);
+    Nonce_t rcvd_fNa2;
+    Nonce_t Nb;
+    
+    MSG4_receive(log, fd_B2A, &Ks, &rcvd_fNa2, &Nb);
+
+    fprintf(log, "\n\nAmal is expecting back this f( Na2 ) in MSG4:\n");
+    BIO_dump_indent_fp(log, expected, sizeof(*expected), 4);
+
+    if (*expected == *rcvd_fNa2)
+        fprintf(log, "\nBasim returned the following f( Na2 )   >>>> VALID\n");
+    else
+        fprintf(log, "\nBasim returned the following f( Na2 )   >>>> Invalid\n");
+
+    BIO_dump_indent_fp(log, rcvd_fNa2, sizeof(*rcvd_fNa2), 4);
+
+    fprintf(log, "\nAmal also received this Nb :\n");
+    BIO_dump_indent_fp(log, Nb, sizeof(*Nb), 4);
+    fprintf(log, "\n");
+
 
     //*************************************
     // Construct & Send    Message 5
@@ -224,6 +245,21 @@ int main ( int argc , char * argv[] )
     fprintf( log , "         MSG5 New\n");
     BANNER( log ) ;
 
+    Nonce_t func_nonce;
+    fNonce(func_nonce, Nb);
+
+    fprintf(log, "Amal is sending this f( Nb ) in MSG5:\n");
+    BIO_dump_indent_fp(log, func_nonce, sizeof(*func_nonce), 4);
+    fprintf(log, "\n");
+
+    uint8_t *msg5;
+    size_t msg_len = MSG5_new(log, &msg5, &Ks, &func_nonce);
+    size_t len_len = sizeof(msg_len);
+
+    write(fd_A2B, &msg_len, len_len);
+    write(fd_A2B, msg5, msg_len);
+
+    fprintf(log, "Amal sent Message 5 ( %lu bytes ) to Basim\n", msg_len);
 
     //*************************************   
     // Final Clean-Up

@@ -1055,27 +1055,37 @@ size_t  MSG4_new( FILE *log , uint8_t **msg4, const myKey_t *Ks , Nonce_t *fNa2 
 {
 
     size_t LenMsg4 ;
-
+    LenMsg4 = 0;
     // Construct MSG4 Plaintext = { f(Na2)  ||  Nb }
     // Use the global scratch buffer plaintext[] for MSG4 plaintext and fill it in with component values
 
+    **((Nonce_t *) plaintext) = **fNa2;
+    LenMsg4 += sizeof(**fNa2);
+    **(((Nonce_t *) plaintext) + 1) = **Nb;
+    LenMsg4 += sizeof(**Nb);
 
     // Now, encrypt MSG4 plaintext using the session key Ks;
     // Use the global scratch buffer ciphertext[] to collect the result. Make sure it fits.
 
+
+    LenMsg4 = encrypt(plaintext, LenMsg4, Ks -> key, Ks -> iv, ciphertext);
+
     // Now allocate a buffer for the caller, and copy the encrypted MSG4 to it
     // *msg4 = malloc( .... ) ;
 
+    *msg4 = malloc(LenMsg4);
 
+    *(__uint128_t *) *msg4 = *((__uint128_t *) ciphertext);
 
     
     fprintf( log , "The following Encrypted MSG4 ( %lu bytes ) has been"
-                   " created by MSG4_new ():  \n" , LenMsg4 ) ;
-    // BIO_dump_indent_fp( log , *msg4 , ... ) ;
+                  " created by MSG4_new ():  \n" , LenMsg4 ) ;
+    BIO_dump_indent_fp( log , *msg4, LenMsg4, 4) ;
+
+    fprintf(log, "\nBasim Sent the above MSG4 to Amal\n\n");
 
     return LenMsg4 ;
     
-
 }
 
 // //-----------------------------------------------------------------------------
@@ -1084,7 +1094,27 @@ size_t  MSG4_new( FILE *log , uint8_t **msg4, const myKey_t *Ks , Nonce_t *fNa2 
 
 void  MSG4_receive( FILE *log , int fd , const myKey_t *Ks , Nonce_t *rcvd_fNa2 , Nonce_t *Nb )
 {
+    // ssize_t read_size = read(fd, ciphertext, CIPHER_LEN_MAX);
 
+    ssize_t length;
+    read(fd, &length, sizeof(ssize_t));
+    read(fd, ciphertext, length);
+
+    fprintf(log, "The following Encrypted MSG4 ( %lu bytes ) was received:\n", length);
+    BIO_dump_indent_fp(log, ciphertext, length, 4);
+
+
+    decrypt(ciphertext, length, Ks -> key, Ks -> iv, plaintext);
+
+    **rcvd_fNa2 = *((uint32_t *) plaintext);
+    **Nb = *((uint32_t *)(plaintext + sizeof(**rcvd_fNa2)));
+
+    // BIO_dump_fp(log, ciphertext, (int) read_size);
+    
+    // decrypt(ciphertext, read_size, Ks -> key, Ks -> iv, plaintext);
+
+    // **rcvd_fNa2 = *plaintext;
+    // **Nb = *((uint32_t *) (plaintext + NONCELEN));
 
 }
 
@@ -1102,14 +1132,15 @@ size_t  MSG5_new( FILE *log , uint8_t **msg5, const myKey_t *Ks ,  Nonce_t *fNb 
     // Construct MSG5 Plaintext  = {  f(Nb)  }
     // Use the global scratch buffer plaintext[] for MSG5 plaintext. Make sure it fits 
 
+    *((uint32_t *) plaintext) = **fNb;
 
     // Now, encrypt( Ks , {plaintext} );
     // Use the global scratch buffer ciphertext[] to collect result. Make sure it fits.
-
+    LenMSG5cipher = encrypt(plaintext, sizeof(uint32_t), Ks -> key, Ks -> iv, ciphertext);
 
     // Now allocate a buffer for the caller, and copy the encrypted MSG5 to it
-    // *msg5 = malloc( ... ) ;
-
+    *msg5 = malloc(LenMSG5cipher);
+    *((__uint128_t *) *msg5) = *((__uint128_t *) ciphertext);
 
     fprintf( log , "The following Encrypted MSG5 ( %lu bytes ) has been"
                    " created by MSG5_new ():  \n" , LenMSG5cipher ) ;
@@ -1134,18 +1165,24 @@ void  MSG5_receive( FILE *log , int fd , const myKey_t *Ks , Nonce_t *fNb )
     // Use the global scratch buffer ciphertext[] to receive encrypted MSG5.
     // Make sure it fits.
 
+    LenMSG5cipher = 0;
+    read(fd, &LenMSG5cipher, sizeof(size_t));
 
-    fprintf( log ,"The following Encrypted MSG5 ( %lu bytes ) has been received:\n" , LenMSG5cipher );
+    read(fd, ciphertext, LenMSG5cipher);
 
+
+    fprintf( log ,"\nThe following Encrypted MSG5 ( %lu bytes ) has been received:\n" , LenMSG5cipher );
+    BIO_dump_indent_fp(log, ciphertext, LenMSG5cipher, 4);
 
     // Now, Decrypt MSG5 using Ks
     // Use the global scratch buffer decryptext[] to collect the results of decryption
     // Make sure it fits
 
+    size_t dec_len = decrypt(ciphertext, LenMSG5cipher, Ks -> key, Ks -> iv, plaintext);
 
     // Parse MSG5 into its components f( Nb )
 
-
+    **fNb = **((Nonce_t *)plaintext);
 
 }
 
@@ -1156,6 +1193,12 @@ void  MSG5_receive( FILE *log , int fd , const myKey_t *Ks , Nonce_t *fNb )
 // // The value of the nonces are interpretted as BIG-Endian unsigned integers
 void     fNonce( Nonce_t r , Nonce_t n )
 {
+    Nonce_t to_shift;
+    *to_shift = 1;
+    *to_shift = *to_shift << 24;
+
+    *r = *n + *to_shift;
+
     // Note that the nonces are store in Big-Endian byte order
     // This affects how you do arithmetice on the noces, e.g. when you add 1
 }
